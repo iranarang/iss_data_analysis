@@ -28,7 +28,7 @@ To run the code, install these packages: xmltodict, logging, requests, flask, an
     
     pip3 install package_name
 
-Additionally, make sure that Docker is installed on the system that is being used.
+Additionally, make sure that Docker is installed on the system that is being used. Also, make sure to change "iranarang" in the docker-compose.yml file to your own Docker username.
 
 First, each file must be built in Docker. Enter this command:
 
