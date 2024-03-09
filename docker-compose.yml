@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+    iss_tracker:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+        image: iranarang/iss_tracker:1.0
+        container_name: iss_tracker-code
+        ports:
+            - "8080:8080"
+        command: ["python", "iss_tracker.py"]
+    test-cases:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile.test
+        image: iranarang/test_iss_tracker:1.0
+        container_name: test_iss_tracker
+        depends_on:
+            - iss_tracker
+        command: ["pytest"]
