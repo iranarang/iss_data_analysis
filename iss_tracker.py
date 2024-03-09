@@ -147,6 +147,16 @@ def get_specific_epoch(epoch: str) -> str:
 
 @app.route('/epochs/<epoch>/speed', methods=['GET'])
 def get_instant_speed(epoch):
+    """
+    This function calculates the speed for the epoch
+
+    Args:
+        epoch (str): The inputted epoch.
+
+    Returns:
+        speed (str): the calculated speed at the epoch if epoch exists
+        '<error>Epoch not found</error>' if epoch does not exist
+    """
 
     for state_vector in data['ndm']['oem']['body']['segment']['data']['stateVector']:
         if state_vector['EPOCH'] == epoch:
@@ -157,34 +167,55 @@ def get_instant_speed(epoch):
     return '<error>Epoch not found</error>'
 
 
-# @app.route('/now', methods=['GET'])
-# def get_nearest_instant_speed():
-
-#     current_time = datetime.now()
-#     closest_epoch, closest_speed = find_closest_time(data, current_time)
-
-#     return f'closest epoch = {closest_epoch}, closest speed = {closest_speed}'
-
 @app.route('/comment', methods=['GET'])
 def get_comment_data():
+    """
+    This function returns information included in the 'comment' section of the data.
+
+    Returns:
+        comment_data (json): comments from the data.
+    """
     comment_data = data['ndm']['oem']['body']['segment']['data']['COMMENT']
 
     return jsonify(comment_data)
 
 @app.route('/header', methods=['GET'])
 def get_header_data():
+    """
+    This function returns information included in the 'header' section of the data.
+
+    Returns:
+        header_data (json): header data from the dataset
+    """
     header_data = data['ndm']['oem']['header']
 
     return jsonify(header_data)
 
 @app.route('/metadata', methods=['GET'])
 def get_metadata():
+
+    """
+    This function returns information included in the 'metadata' section of the data.
+
+    Returns:
+        metadata(json): metadata for the dataset segment
+    """
     metadata = data['ndm']['oem']['body']['segment']['metadata']
 
     return jsonify(metadata)
 
 @app.route('/epochs/<epoch>/location', methods=['GET'])
 def get_location(epoch):
+
+    """
+    This function finds the location(lat, long, altitude, geolocation) for the epoch
+
+    Args:
+        epoch (str): The inputted epoch.
+
+    Returns:
+       json: returns a json containing location(lat, long, altitude, geolocation)
+    """
     R = 6378
     
 
@@ -205,16 +236,16 @@ def get_location(epoch):
             long = loc.lon.value
             altitude = loc.height.value
 
-            #geolocator = Nominatim(user_agent="iss_locator")
-            #location = geolocator.reverse(f'{lat}, {long}')
-            # if location == None:
-            #     location = "Located in the ocean"
+            geolocator = Nominatim(user_agent="iss_locator")
+            location = geolocator.reverse(f'{lat}, {long}')
+            if location == None:
+                location = "Located in the ocean"
                 
             return jsonify({
                 'latitude': str(lat),
                 'longitude': str(long), 
                 'altitude': f'{str(altitude)} km', 
-                #'geoposition': str(location)
+                'geolocation': f'{str(location)}',
             })
             
     return "error"
@@ -222,6 +253,16 @@ def get_location(epoch):
 
 @app.route('/now', methods=['GET'])
 def get_current_location():
+
+    """
+    This function finds the current location(lat, long, altitude, instaneous speed) for the epoch based on current time
+
+    Args:
+        epoch (str): The inputted epoch.
+
+    Returns:
+       json: returns a json containing location(lat, long, altitude, geolocation)
+    """
 
     current_time = datetime.now()
     closest_epoch, closest_speed = find_closest_time(data, current_time)
@@ -235,7 +276,6 @@ def get_current_location():
             y = float(state_vector['Y']['#text'])
             z = float(state_vector['Z']['#text'])
             
-            # assumes epoch is in format '2024-067T08:28:00.000Z'
             this_epoch=time.strftime('%Y-%m-%d %H:%m:%S', time.strptime(state_vector['EPOCH'][:-5], '%Y-%jT%H:%M:%S'))
             
             cartrep = coordinates.CartesianRepresentation([x, y, z], unit=units.km)
@@ -247,34 +287,17 @@ def get_current_location():
             long = loc.lon.value
             altitude = loc.height.value
 
-            # print(f'time {closest_epoch_time}')
-            # closest_epoch_time = datetime.strptime(closest_epoch_time, '%Y-%jT%H:%M:%S.%fZ')
-            # print(f'time {closest_epoch_time}')
-            # hrs = float(closest_epoch_time.hour)
-            # print(f'hours: {hrs}')
-            # mins = float(closest_epoch_time.minute)
-            # print(f'minutes: {mins}')
+            geolocator = Nominatim(user_agent="iss_locator")
+            location = geolocator.reverse(f'{lat}, {long}')
+            if location == None:
+                location = "Located in the ocean"
 
-            # lat = math.degrees(math.atan2(z, math.sqrt(x**2 + y**2))) 
-            # print(f'lat: {lat}')
-            # long = math.degrees(math.atan2(y, x)) - ((hrs-12)+(mins/60))*(360/24) + 19
-            # if long > 180: long = -180 + (long - 180)
-            # if long < -180: long = 180 + (long + 180)
-
-            # print(f'long: {long}')
-
-            # altitude = math.sqrt(x**2 + y**2 + z**2) - R
-            # geolocator = Nominatim(user_agent="iss_locator")
-            # location = geolocator.reverse(f'{lat}, {long}')
-            # if location == None:
-            #     location = "Located in the ocean"
-
-    # return f'instantaneous speed = {closest_speed}, latitude: {str(lat)}, longitude: {str(long)}, altitude: {str(altitude)} km'
     return jsonify({
         'instantaneous speed': closest_speed,
         'latitude': str(lat),
         'longitude': str(long), 
         'altitude': f'{str(altitude)} km', 
+        'geolocation': f'{str(location)}', 
     })
 
 if __name__ == "__main__":
